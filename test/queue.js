@@ -4,7 +4,7 @@ const tap = require('tap');
 const metasync = require('..');
 
 tap.test('queue add', (test) => {
-  const queue =  new metasync.ConcurrentQueue(3, 2000);
+  const queue = metasync.queue(3).timeout(2000);
   let taskIndex = 1;
 
   queue.on('process', (item, callback) => {
@@ -15,7 +15,7 @@ tap.test('queue add', (test) => {
     });
   });
 
-  queue.on('empty', () => {
+  queue.on('drain', () => {
     test.end();
   });
 
@@ -27,7 +27,7 @@ tap.test('queue add', (test) => {
 
 
 tap.test('queue pause resume stop', (test) => {
-  const queue =  new metasync.ConcurrentQueue(3);
+  const queue = metasync.queue(3);
   queue.pause();
   queue.add({ id: 1 });
   test.strictSame(queue.count, 0);
@@ -45,7 +45,7 @@ tap.test('queue pause resume stop', (test) => {
   test.strictSame(itemIsProcessed, false);
 
   queue.resume();
-  test.strictSame(queue.isOnPause, false);
+  test.strictSame(queue.paused, false);
 
   queue.emit('wrongEvent');
 
@@ -55,7 +55,7 @@ tap.test('queue pause resume stop', (test) => {
 });
 
 tap.test('queue with no process function and no timeout', (test) => {
-  const queue =  new metasync.ConcurrentQueue(3);
+  const queue = metasync.queue(3);
   queue.add({ id: 1 });
   queue.add({ id: 2 });
   queue.add({ id: 3 });
@@ -65,9 +65,9 @@ tap.test('queue with no process function and no timeout', (test) => {
 });
 
 tap.test('queue with timeout event', (test) => {
-  const timeoutErr = new Error('ConcurrentQueue timed out');
+  const timeoutErr = new Error('Queue timed out');
 
-  const queue =  new metasync.ConcurrentQueue(3, 1);
+  const queue = metasync.queue(3).timeout(1);
 
   queue.on('process', (item, callback) => setTimeout(() => {
     callback(null, item);
